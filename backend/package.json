@@ -1,0 +1,18 @@
+{
+  "name": "v0idch3ck-backend",
+  "version": "1.0.0",
+  "description": "V0idCh3ck AI-Powered Code Review Platform — Backend",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@langchain/groq": "^0.1.2",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
