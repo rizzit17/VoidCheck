@@ -59,10 +59,10 @@ const LandingPage = ({ onComplete }) => {
         &gt; AI-Powered Code Review &amp; Analysis Platform
       </div>
 
-      <div style={{ width: '400px', maxWidth: '80%', zIndex: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--accent-cyan)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          <span>{loadingText}<span className="blink-cursor">_</span></span>
-          <span>{Math.floor(progress)}%</span>
+      <div style={{ width: '400px', maxWidth: '85%', zIndex: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px', color: 'var(--accent-cyan)', fontSize: 'clamp(0.6rem, 2.5vw, 0.8rem)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <span style={{ marginRight: '10px' }}>{loadingText}<span className="blink-cursor">_</span></span>
+          <span style={{ flexShrink: 0 }}>{Math.floor(progress)}%</span>
         </div>
         
         <div style={{ width: '100%', height: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative' }}>
