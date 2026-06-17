@@ -34,7 +34,7 @@ export default function ReviewPanel({ reviewData, isLoading }) {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '28px', height: '100%', overflowY: 'auto' }}>
+      <div className="review-content-wrapper">
         <div style={{ marginBottom: '28px' }}>
           <SectionLabel>Analyzing</SectionLabel>
           {[0, 1, 2, 3, 4].map(i => (
@@ -69,7 +69,7 @@ export default function ReviewPanel({ reviewData, isLoading }) {
   };
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '24px 24px 48px' }}>
+    <div className="review-content-wrapper" style={{ padding: '24px 24px 48px' }}>
 
       {/* Summary + Export */}
       <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', gap: '16px' }}>

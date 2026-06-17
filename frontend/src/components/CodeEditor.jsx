@@ -29,7 +29,7 @@ export default function CodeEditor({ code, onChange, language }) {
           minimap: { enabled: false },
           padding: { top: 16, bottom: 16 },
           scrollBeyondLastLine: false,
-          wordWrap: 'on',
+          wordWrap: 'off',
           renderLineHighlight: 'line',
           smoothScrolling: true,
           cursorBlinking: 'phase',

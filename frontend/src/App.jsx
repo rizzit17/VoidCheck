@@ -268,7 +268,7 @@ export default function App() {
               </span>
             )}
           </div>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
+          <div className="review-panel-container">
             <ReviewPanel reviewData={reviewData} isLoading={isLoading} />
           </div>
         </div>
