@@ -496,6 +496,39 @@ body {
   background: var(--bg-primary);
 }
 
+@media (max-width: 767px) {
+  .app-container {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .main-layout {
+    flex: none;
+    height: auto;
+    overflow: visible;
+  }
+  .editor-pane {
+    flex: none;
+    height: 50vh;
+    height: 50dvh;
+    min-height: 350px;
+  }
+  .review-pane {
+    flex: none;
+    height: 85vh;
+    height: 85dvh;
+    min-height: 500px;
+  }
+  .glitch-wrapper {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
 @media (min-width: 768px) {
   .app-header {
     flex-direction: row;
@@ -599,15 +632,6 @@ body {
   z-index: 10;
 }
 
-@media (max-width: 767px) {
-  .glitch-wrapper {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-  }
-  .hide-on-mobile {
-    display: none !important;
-  }
-}
 
 .cyber-btn {
   background: transparent;
