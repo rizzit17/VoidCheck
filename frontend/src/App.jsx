@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import CodeEditor from './components/CodeEditor';
 import ReviewPanel from './components/ReviewPanel';
 import HealthScore from './components/HealthScore';
+import LandingPage from './components/LandingPage';
+import { detectLanguage } from './utils/languageDetector';
 
 const LANGUAGES = [
   { value: 'javascript', label: 'JavaScript' },
@@ -25,6 +27,7 @@ console.log(fibonacci(40));
 const mono = { fontFamily: "'Space Mono', monospace" };
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState('paste');
   const [code, setCode] = useState(SAMPLE_CODE);
   const [language, setLanguage] = useState('javascript');
@@ -47,6 +50,19 @@ export default function App() {
     const id = setInterval(() => setLoadingDots(d => d === 3 ? 1 : d + 1), 500);
     return () => clearInterval(id);
   }, [isLoading]);
+
+  // Auto-detect language when pasting code
+  React.useEffect(() => {
+    if (activeTab === 'paste' && code) {
+      const timeoutId = setTimeout(() => {
+        const detected = detectLanguage(code);
+        if (detected && detected !== language) {
+          setLanguage(detected);
+        }
+      }, 800); // 800ms debounce to avoid flickering while typing
+      return () => clearTimeout(timeoutId);
+    }
+  }, [code, activeTab, language]);
 
   const handleAnalyze = async () => {
     if (isLoading) return;
@@ -81,8 +97,15 @@ export default function App() {
         });
       }
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Review failed.');
+      let data;
+      const textResponse = await response.text();
+      try {
+        data = textResponse ? JSON.parse(textResponse) : {};
+      } catch (err) {
+        throw new Error('Received invalid or empty response from server. Is the backend running?');
+      }
+
+      if (!response.ok) throw new Error(data.message || data.error || `Server error: ${response.status}`);
       if (data.fileContent) {
         setGithubCode(data.fileContent);
         setGithubLang(data.source?.language || 'javascript');
@@ -98,69 +121,86 @@ export default function App() {
   const ext = { python: 'py', cpp: 'cpp', typescript: 'ts', java: 'java', go: 'go' };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#080808' }}>
+    <div className="app-container">
+      {showLanding && <LandingPage onComplete={() => setShowLanding(false)} />}
 
       {/* ── Navbar ── */}
-      <header style={{
-        display: 'flex',
-        alignItems: 'stretch',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid #1A1A1A',
-        background: '#080808',
-        flexShrink: 0,
-        height: '48px',
-      }}>
-        {/* Wordmark */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 20px',
-          borderRight: '1px solid #1A1A1A',
-          gap: '10px',
-          flexShrink: 0,
-        }}>
-          <span style={{ color: '#AAFF00', fontSize: '14px', fontWeight: 700, letterSpacing: '0.05em', ...mono }}>
-            V0idCh3ck
-          </span>
-          <span style={{ color: '#2A2A2A', fontSize: '10px', ...mono }}>▸</span>
-          <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', ...mono }}>
-            AI Review
-          </span>
+      <header className="app-header">
+        {/* Top bar for mobile: Wordmark + Health Score + Analyze Button */}
+        <div className="header-top">
+          {/* Wordmark */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 16px',
+            borderRight: '1px solid #1A1A1A',
+            gap: '10px',
+            flexShrink: 0,
+          }}>
+            <span style={{ color: '#AAFF00', fontSize: '14px', fontWeight: 700, letterSpacing: '0.05em', ...mono }}>
+              V0idCh3ck
+            </span>
+            <span style={{ color: '#6E7681', fontSize: '10px', ...mono }}>▸</span>
+            <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', ...mono, display: 'none' }} className="hide-on-mobile">
+              AI Review
+            </span>
+          </div>
+
+          {/* Right: health score + analyze */}
+          <div className="header-actions">
+            {reviewData && (
+              <div style={{ padding: '0 12px', borderRight: '1px solid #1A1A1A' }}>
+                <HealthScore score={reviewData.healthScore} />
+              </div>
+            )}
+            <button
+              className="btn-primary"
+              onClick={handleAnalyze}
+              disabled={isLoading}
+              style={{ height: '100%', borderTop: 'none', borderBottom: 'none', borderRight: 'none', borderRadius: 0, padding: '0 16px', fontSize: '12px' }}
+            >
+              {isLoading
+                ? `...`
+                : 'ANALYZE'}
+            </button>
+          </div>
         </div>
 
         {/* Center: tabs + inputs */}
-        <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, paddingLeft: '8px' }}>
-          <button className={`tab-button ${activeTab === 'paste' ? 'active' : ''}`} onClick={() => setActiveTab('paste')}>
-            Paste Code
-          </button>
-          <button className={`tab-button ${activeTab === 'github' ? 'active' : ''}`} onClick={() => setActiveTab('github')}>
-            GitHub URL
-          </button>
+        <div className="header-controls">
+          <div className="header-controls-group">
+            <button className={`tab-button ${activeTab === 'paste' ? 'active' : ''}`} onClick={() => setActiveTab('paste')} style={{ flex: 1 }}>
+              Paste Code
+            </button>
+            <button className={`tab-button ${activeTab === 'github' ? 'active' : ''}`} onClick={() => setActiveTab('github')} style={{ flex: 1 }}>
+              GitHub URL
+            </button>
+          </div>
 
           {activeTab === 'paste' && (
-            <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '16px', gap: '0' }}>
-              <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', ...mono, marginRight: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', ...mono, marginRight: '8px' }}>
                 [ lang
               </span>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
                 <select
                   className="select-field"
                   value={language}
                   onChange={e => setLanguage(e.target.value)}
-                  style={{ minWidth: '120px' }}
+                  style={{ width: '100%' }}
                 >
                   {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                 </select>
-                <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#444', fontSize: '9px', pointerEvents: 'none', ...mono }}>▾</span>
+                <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6E7681', fontSize: '9px', pointerEvents: 'none', ...mono }}>▾</span>
               </div>
-              <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', ...mono, marginLeft: '8px' }}>
+              <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', ...mono, marginLeft: '8px' }}>
                 ]
               </span>
             </div>
           )}
 
           {activeTab === 'github' && (
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1, padding: '0 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
               <input
                 className="input-field"
                 type="text"
@@ -168,37 +208,18 @@ export default function App() {
                 value={githubUrl}
                 onChange={e => setGithubUrl(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAnalyze()}
-                style={{ maxWidth: '480px' }}
+                style={{ width: '100%' }}
               />
             </div>
           )}
         </div>
-
-        {/* Right: health score + analyze */}
-        <div style={{ display: 'flex', alignItems: 'center', borderLeft: '1px solid #1A1A1A' }}>
-          {reviewData && (
-            <div style={{ padding: '0 20px', borderRight: '1px solid #1A1A1A' }}>
-              <HealthScore score={reviewData.healthScore} />
-            </div>
-          )}
-          <button
-            className="btn-primary"
-            onClick={handleAnalyze}
-            disabled={isLoading}
-            style={{ height: '100%', borderTop: 'none', borderBottom: 'none', borderRight: 'none' }}
-          >
-            {isLoading
-              ? `ANALYZING ${'.'.repeat(loadingDots)}`
-              : 'ANALYZE CODE'}
-          </button>
-        </div>
       </header>
 
       {/* ── Main split ── */}
-      <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <main className="main-layout">
 
         {/* Left: editor */}
-        <div style={{ width: '45%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1A1A1A' }}>
+        <div className="editor-pane">
           <div style={{
             padding: '6px 16px',
             borderBottom: '1px solid #1A1A1A',
@@ -206,8 +227,8 @@ export default function App() {
             alignItems: 'center',
             gap: '10px',
           }}>
-            <span style={{ color: '#222', fontSize: '9px', ...mono }}>●●●</span>
-            <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>
+            <span style={{ color: '#6E7681', fontSize: '9px', ...mono }}>●●●</span>
+            <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>
               {activeTab === 'paste'
                 ? `code.${ext[language] || 'js'}`
                 : reviewData?.source?.fileName || 'github_file'}
@@ -220,7 +241,7 @@ export default function App() {
               <CodeEditor code={githubCode} onChange={setGithubCode} language={githubLang} />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <span style={{ color: '#1E1E1E', fontSize: '12px', letterSpacing: '0.1em', ...mono }}>
+                <span style={{ color: '#6E7681', fontSize: '12px', letterSpacing: '0.1em', ...mono }}>
                   _ ENTER A GITHUB URL ABOVE<span className="cursor">_</span>
                 </span>
               </div>
@@ -229,7 +250,7 @@ export default function App() {
         </div>
 
         {/* Right: review */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#080808' }}>
+        <div className="review-pane">
           <div style={{
             padding: '6px 16px',
             borderBottom: '1px solid #1A1A1A',
@@ -238,11 +259,11 @@ export default function App() {
             justifyContent: 'space-between',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#222', fontSize: '9px', ...mono }}>●●●</span>
-              <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>review_output</span>
+              <span style={{ color: '#6E7681', fontSize: '9px', ...mono }}>●●●</span>
+              <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>review_output</span>
             </div>
             {reviewData && (
-              <span style={{ color: '#333', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>
+              <span style={{ color: '#8B949E', fontSize: '9px', letterSpacing: '0.1em', ...mono }}>
                 {reviewData.issues?.length || 0} ISSUES
               </span>
             )}
